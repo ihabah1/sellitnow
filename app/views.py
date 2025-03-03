@@ -1,45 +1,46 @@
-"""
-Definition of views.
-"""
+from django.shortcuts import render, redirect
+from django.views import View
+from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
+from django.contrib.auth.mixins import LoginRequiredMixin
+from .models import Product
+from .forms import ProductForm
 
-from datetime import datetime
-from django.shortcuts import render
-from django.http import HttpRequest
+class HomeView(View):
+    """ Default homepage view """
+    def get(self, request):
+        return render(request, 'app/index.html')
 
-def home(request):
-    """Renders the home page."""
-    assert isinstance(request, HttpRequest)
-    return render(
-        request,
-        'app/index.html',
-        {
-            'title':'Home Page',
-            'year':datetime.now().year,
-        }
-    )
+@method_decorator(login_required, name='dispatch')
+class LobbyView(View):
+    """ Lobby view that shows all listed products """
+    def get(self, request):
+        products = Product.objects.all()
+        return render(request, 'app/lobby.html', {'products': products})
 
-def contact(request):
-    """Renders the contact page."""
-    assert isinstance(request, HttpRequest)
-    return render(
-        request,
-        'app/contact.html',
-        {
-            'title':'Contact',
-            'message':'Your contact page.',
-            'year':datetime.now().year,
-        }
-    )
+class ProductCreateView(LoginRequiredMixin, View):
+    """ View to create a new product listing """
+    login_url = 'login'  # Redirects users to login if not authenticated
 
-def about(request):
-    """Renders the about page."""
-    assert isinstance(request, HttpRequest)
-    return render(
-        request,
-        'app/about.html',
-        {
-            'title':'About',
-            'message':'Your application description page.',
-            'year':datetime.now().year,
-        }
-    )
+    def get(self, request):
+        form = ProductForm()
+        return render(request, 'app/add_product.html', {'form': form})
+
+    def post(self, request):
+        form = ProductForm(request.POST, request.FILES)
+        if form.is_valid():
+            product = form.save(commit=False)
+            product.seller = request.user
+            product.save()
+            return redirect('lobby')
+        return render(request, 'app/add_product.html', {'form': form})
+
+class AdminDashboardView(LoginRequiredMixin, View):
+    """ Admin dashboard view """
+    login_url = 'login'  
+
+    def get(self, request):
+        if not request.user.is_staff:
+            return redirect('lobby')  # Redirect non-admin users
+        products = Product.objects.all()
+        return render(request, 'app/admin_dashboard.html', {'products': products})

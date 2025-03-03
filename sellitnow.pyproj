@@ -34,6 +34,9 @@
   <ItemGroup>
     <Compile Include="app\forms.py" />
     <Compile Include="app\models.py" />
+    <Compile Include="app\templates\app\admin.py" />
+    <Compile Include="app\templates\app\apps.py" />
+    <Compile Include="app\templates\app\forms.py" />
     <Compile Include="app\tests.py" />
     <Compile Include="app\views.py" />
     <Compile Include="app\__init__.py" />
@@ -57,6 +60,10 @@
     <Folder Include="sellitnow\" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="app\templates\app\add_product.html" />
+    <Content Include="app\templates\app\base.html" />
+    <Content Include="app\templates\app\lobby.html" />
+    <Content Include="app\templates\app\register.html" />
     <Content Include="requirements.txt" />
     <Content Include="db.sqlite3" />
     <Content Include="app\static\app\content\bootstrap.css" />
