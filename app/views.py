@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.views import View
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from .models import Product
 from .forms import ProductForm
 
@@ -20,7 +20,7 @@ class LobbyView(View):
 
 class ProductCreateView(LoginRequiredMixin, View):
     """ View to create a new product listing """
-    login_url = 'login'  # Redirects users to login if not authenticated
+    login_url = 'account_login'  # Redirects users to login if not authenticated
 
     def get(self, request):
         form = ProductForm()
@@ -35,12 +35,15 @@ class ProductCreateView(LoginRequiredMixin, View):
             return redirect('lobby')
         return render(request, 'app/add_product.html', {'form': form})
 
-class AdminDashboardView(LoginRequiredMixin, View):
+class AdminDashboardView(UserPassesTestMixin, LoginRequiredMixin, View):
     """ Admin dashboard view """
-    login_url = 'login'  
+    login_url = 'account_login'  
+
+    def test_func(self):
+        return self.request.user.is_staff  # Only allow staff users
 
     def get(self, request):
-        if not request.user.is_staff:
+        if not self.request.user.is_staff:
             return redirect('lobby')  # Redirect non-admin users
         products = Product.objects.all()
         return render(request, 'app/admin_dashboard.html', {'products': products})

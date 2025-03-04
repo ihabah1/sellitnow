@@ -8,5 +8,7 @@ urlpatterns = [
     path('lobby/', LobbyView.as_view(), name='lobby'),  # Lobby view for products
     path('add-product/', ProductCreateView.as_view(), name='add_product'),  # Product creation page
     path('admin-dashboard/', AdminDashboardView.as_view(), name='admin_dashboard'),  # Admin dashboard
-    path('accounts/', include('allauth.urls')),  # Authentication with Django Allauth
+    
+    # Authentication URLs
+    path('accounts/', include('allauth.urls')),  # Django Allauth for authentication
 ]

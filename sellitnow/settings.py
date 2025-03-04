@@ -26,13 +26,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    # Third-party apps
+    'app',  # Your custom app
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
-
-    # Your app must be listed here:
-    'app',  # Make sure this line is present
 ]
 
 
@@ -52,7 +49,7 @@ ROOT_URLCONF = 'sellitnow.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],  # Ensure 'templates' directory exists
+        'DIRS': [BASE_DIR / "app/templates"],  # This should match your template directory
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
