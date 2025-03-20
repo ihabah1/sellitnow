@@ -123,9 +123,9 @@ LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# Looking to send emails in production? Check out our Email API/SMTP product!
 EMAIL_HOST = 'sandbox.smtp.mailtrap.io'
-EMAIL_PORT = 587  # Use 587 for TLS
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = '86c50940d88a89'
-EMAIL_HOST_PASSWORD = '3ab10d9c33e58d'
+EMAIL_HOST_USER = '5618690533dd66'
+EMAIL_HOST_PASSWORD = '72a7bccc645082'
+EMAIL_PORT = '2525'
 DEFAULT_FROM_EMAIL = 'no-reply@yourdomain.com'

@@ -35,9 +35,9 @@ class ProductCreateView(LoginRequiredMixin, View):
             return redirect('lobby')
         return render(request, 'app/add_product.html', {'form': form})
 
-class AdminDashboardView(UserPassesTestMixin, LoginRequiredMixin, View):
+class AdminDashboardView(LoginRequiredMixin, UserPassesTestMixin, View):
     """ Admin dashboard view """
-    login_url = 'account_login'  
+    login_url = 'account_login'
 
     def test_func(self):
         return self.request.user.is_staff  # Only allow staff users
