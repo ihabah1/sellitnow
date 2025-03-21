@@ -15,7 +15,8 @@ SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-here")
 DEBUG = os.getenv("DEBUG", "True") == "True"
 
 # Allowed hosts
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
+ALLOWED_HOSTS = ["sellitnow-production.up.railway.app", "127.0.0.1", "localhost"]
+
 
 # Application definition
 INSTALLED_APPS = [
