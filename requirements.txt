@@ -1,3 +1,6 @@
 django
 python-dotenv
 django-allauth
+Pillow 
+ 
+ 
