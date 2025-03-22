@@ -4,5 +4,5 @@ python-dotenv
 django-allauth
 Pillow
 gunicorn
- 
+whitenoise
  
