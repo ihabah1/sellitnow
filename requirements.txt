@@ -3,5 +3,6 @@ python-dotenv
 django-allauth
 Pillow
 gunicorn
+django-admin-interface
  
  
