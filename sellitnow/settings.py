@@ -17,6 +17,10 @@ DEBUG = os.getenv("DEBUG", "True") == "True"
 # Allowed hosts
 ALLOWED_HOSTS = ["sellitnow-production.up.railway.app", "127.0.0.1", "localhost"]
 
+CSRF_TRUSTED_ORIGINS = [
+    "https://sellitnow-production.up.railway.app",
+]
+
 
 # Application definition
 INSTALLED_APPS = [
