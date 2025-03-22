@@ -97,7 +97,7 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / 'static']  # Ensure 'static' directory exists
+STATICFILES_DIRS = [BASE_DIR / 'app/static']
 
 # Media files (Uploaded content)
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
