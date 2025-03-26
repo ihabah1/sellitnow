@@ -1,5 +1,6 @@
 ﻿import os
 from pathlib import Path
+from pickle import FALSE
 from dotenv import load_dotenv
 
 # Load environment variables from .env
@@ -116,11 +117,30 @@ AUTHENTICATION_BACKENDS = (
 )
 
 # Django-Allauth settings (Updated)
-ACCOUNT_LOGIN_METHODS = {"email"}  # Replaces ACCOUNT_AUTHENTICATION_METHOD
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_USERNAME_REQUIRED = False
-ACCOUNT_EMAIL_VERIFICATION = "mandatory"
-ACCOUNT_RATE_LIMITS = {"login_failed": {"limit": 5, "timeout": 300}}  # Replaces ACCOUNT_LOGIN_ATTEMPTS_LIMIT
+#ACCOUNT_LOGIN_METHODS = "email"  # Replaces ACCOUNT_AUTHENTICATION_METHOD
+#ACCOUNT_EMAIL_REQUIRED = True
+#ACCOUNT_USERNAME_REQUIRED = False
+#ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+ACCOUNT_RATE_LIMITS = {
+    "login_failed": "5/m",  # 5 failed login attempts per minute
+    "login": "10/m",  # 10 successful logins per minute
+}
+
+
+# Allow login with either username or email
+# Allow both username and email for login
+ACCOUNT_AUTHENTICATION_METHOD = "username_email"
+
+# Make username required
+ACCOUNT_USERNAME_REQUIRED = True
+
+# Keep email optional (if needed)
+ACCOUNT_EMAIL_REQUIRED = False 
+ACCOUNT_EMAIL_VERIFICATION = "optional"  # Adjust as needed
+ACCOUNT_FORMS = {
+    'login': 'app.forms.CustomLoginForm',  # Adjust 'app' to your actual app name
+}
+
 
 # Login URLs
 LOGIN_REDIRECT_URL = "/"
