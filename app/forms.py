@@ -3,6 +3,14 @@ from allauth.account.forms import LoginForm
 
 from .models import Product  # Ensure Product model is correctly imported
 
+from django import forms
+from .models import Room
+
+class RoomForm(forms.ModelForm):
+    class Meta:
+        model = Room
+        fields = ['name']
+
 class ProductForm(forms.ModelForm):
     class Meta:
         model = Product

@@ -1,6 +1,5 @@
 ﻿import os
 from pathlib import Path
-from pickle import FALSE
 from dotenv import load_dotenv
 
 # Load environment variables from .env
@@ -50,7 +49,6 @@ MIDDLEWARE = [
     "allauth.account.middleware.AccountMiddleware",
 ]
 
-
 ROOT_URLCONF = "sellitnow.urls"
 
 TEMPLATES = [
@@ -75,7 +73,7 @@ WSGI_APPLICATION = "sellitnow.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",  # Change to PostgreSQL for production
-        "NAME": BASE_DIR / "db.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",         # SQLite file
     }
 }
 
@@ -95,7 +93,7 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = "/static/"
-STATIC_ROOT = BASE_DIR / "staticfiles"  # Required for collectstatic
+STATIC_ROOT = BASE_DIR / "staticfiles"  # This is required for collectstatic
 STATICFILES_DIRS = [BASE_DIR / "app/static"] if (BASE_DIR / "app/static").exists() else []
 
 # Media files (Uploaded content)
@@ -117,18 +115,16 @@ AUTHENTICATION_BACKENDS = (
 )
 
 # Django-Allauth settings (Updated)
-#ACCOUNT_LOGIN_METHODS = "email"  # Replaces ACCOUNT_AUTHENTICATION_METHOD
-#ACCOUNT_EMAIL_REQUIRED = True
-#ACCOUNT_USERNAME_REQUIRED = False
-#ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+# ACCOUNT_LOGIN_METHODS = "email"  # Replaces ACCOUNT_AUTHENTICATION_METHOD
+# ACCOUNT_EMAIL_REQUIRED = True
+# ACCOUNT_USERNAME_REQUIRED = False
+# ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 ACCOUNT_RATE_LIMITS = {
     "login_failed": "5/m",  # 5 failed login attempts per minute
     "login": "10/m",  # 10 successful logins per minute
 }
 
-
 # Allow login with either username or email
-# Allow both username and email for login
 ACCOUNT_AUTHENTICATION_METHOD = "username_email"
 
 # Make username required
@@ -140,7 +136,6 @@ ACCOUNT_EMAIL_VERIFICATION = "optional"  # Adjust as needed
 ACCOUNT_FORMS = {
     'login': 'app.forms.CustomLoginForm',  # Adjust 'app' to your actual app name
 }
-
 
 # Login URLs
 LOGIN_REDIRECT_URL = "/"
@@ -156,3 +151,15 @@ DEFAULT_FROM_EMAIL = "no-reply@yourdomain.com"
 
 # Enable Whitenoise for static file management (Optional)
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
+# Cloudinary settings for media files
+DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
+CLOUDINARY_STORAGE = {
+    "CLOUD_NAME": os.getenv("CLOUDINARY_CLOUD_NAME"),
+    "API_KEY": os.getenv("CLOUDINARY_API_KEY"),
+    "API_SECRET": os.getenv("CLOUDINARY_API_SECRET"),
+}
+
+# Customizing session settings (Optional)
+SESSION_ENGINE = "django.contrib.sessions.backends.db"
+SESSION_COOKIE_NAME = "sessionid"
