@@ -92,9 +92,15 @@ USE_I18N = True
 USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
-STATIC_URL = "/static/"
-STATIC_ROOT = BASE_DIR / "staticfiles"  # This is required for collectstatic
-STATICFILES_DIRS = [BASE_DIR / "app/static"] if (BASE_DIR / "app/static").exists() else []
+# settings.py
+
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [BASE_DIR / 'app/static']  # Ensure this path is correct
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+#STATIC_URL = "/static/"
+#STATIC_ROOT = BASE_DIR / "staticfiles"  # This is required for collectstatic
+#STATICFILES_DIRS = [BASE_DIR / "app/static"] if (BASE_DIR / "app/static").exists() else []
 
 # Media files (Uploaded content)
 DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
@@ -133,9 +139,7 @@ ACCOUNT_USERNAME_REQUIRED = True
 # Keep email optional (if needed)
 ACCOUNT_EMAIL_REQUIRED = False 
 ACCOUNT_EMAIL_VERIFICATION = "optional"  # Adjust as needed
-ACCOUNT_FORMS = {
-    'login': 'app.forms.CustomLoginForm',  # Adjust 'app' to your actual app name
-}
+
 
 # Login URLs
 LOGIN_REDIRECT_URL = "/"

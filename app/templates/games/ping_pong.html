@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ping Pong Game</title>
+    <style>
+        canvas { background: #000; display: block; margin: 40px auto; }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="600" height="400"></canvas>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        let paddleWidth = 10, paddleHeight = 100;
+        let playerY = canvas.height / 2 - paddleHeight / 2;
+        let ballX = canvas.width / 2, ballY = canvas.height / 2;
+        let ballSpeedX = 5, ballSpeedY = 3;
+        let score = 0;
+
+        document.addEventListener("mousemove", (e) => {
+            const rect = canvas.getBoundingClientRect();
+            playerY = e.clientY - rect.top - paddleHeight / 2;
+        });
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Paddle
+            ctx.fillStyle = "white";
+            ctx.fillRect(0, playerY, paddleWidth, paddleHeight);
+
+            // Ball
+            ctx.beginPath();
+            ctx.arc(ballX, ballY, 10, 0, Math.PI * 2);
+            ctx.fill();
+
+            ballX += ballSpeedX;
+            ballY += ballSpeedY;
+
+            if (ballY <= 0 || ballY >= canvas.height) ballSpeedY *= -1;
+
+            // Paddle collision
+            if (ballX <= paddleWidth && ballY >= playerY && ballY <= playerY + paddleHeight) {
+                ballSpeedX *= -1;
+                score++;
+            }
+
+            // Game over
+            if (ballX < 0) {
+                alert("Game over! Your score: " + score);
+                submitScore(score);
+                ballX = canvas.width / 2;
+                ballY = canvas.height / 2;
+                ballSpeedX = 5;
+                score = 0;
+            }
+        }
+
+        function submitScore(score) {
+            fetch("{% url 'submit_score' %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": "{{ csrf_token }}"
+                },
+                body: JSON.stringify({
+                    game: "ping_pong",
+                    score: score
+                })
+            });
+        }
+
+        setInterval(draw, 1000 / 60);
+    </script>
+</body>
+</html>
