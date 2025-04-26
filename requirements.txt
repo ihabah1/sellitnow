@@ -1,9 +1,10 @@
-django-admin-interface
 django
-python-dotenv
+django-admin-interface
 django-allauth
+python-dotenv
 Pillow
 gunicorn
 whitenoise
 pymysql
 dj_database_url
+psycopg2-binary
