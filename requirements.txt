@@ -6,3 +6,4 @@ Pillow
 gunicorn
 whitenoise
 pymysql
+dj_database_url
