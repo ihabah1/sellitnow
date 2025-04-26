@@ -1,0 +1,8 @@
+django-admin-interface
+django
+python-dotenv
+django-allauth
+Pillow
+gunicorn
+whitenoise
+ 

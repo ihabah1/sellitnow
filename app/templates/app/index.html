@@ -1,0 +1,14 @@
+{% extends "app/base.html" %}
+
+{% block title %}Welcome - SellItNow{% endblock %}
+
+{% block content %}
+<div class="container text-center mt-5">
+    <h1 class="display-4">Welcome to SellItNow</h1>
+    <p class="lead">A modern marketplace to sell and buy products.</p>
+    {% if not user.is_authenticated %}
+    <a href="{% url 'account_login' %}" class="btn btn-primary btn-lg">Login</a>
+    <a href="{% url 'account_signup' %}" class="btn btn-success btn-lg">Register</a>
+    {% endif %}
+</div>
+{% endblock %}
