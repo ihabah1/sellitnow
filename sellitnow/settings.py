@@ -69,8 +69,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "sellitnow.wsgi.application"
 
-import dj_database_url
-
 DATABASES = {
     'default': dj_database_url.config(
         default='postgresql://postgres:hSEjZdGIqLGMoYOtbIYLPxbNxwQrtKFc@interchange.proxy.rlwy.net:50440/railway',
