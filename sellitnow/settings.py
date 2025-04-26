@@ -69,16 +69,14 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "sellitnow.wsgi.application"
 
-# Database Configuration
+import dj_database_url
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'django_app',
-        'USER': 'postgres',
-        'PASSWORD': '  ',  # literally two space characters
-        'HOST': 'localhost',
-        'PORT': '5432',
-    }
+    'default': dj_database_url.config(
+        default='postgresql://postgres:hSEjZdGIqLGMoYOtbIYLPxbNxwQrtKFc@interchange.proxy.rlwy.net:50440/railway',
+        conn_max_age=600,
+        ssl_require=True,
+    )
 }
 
 
