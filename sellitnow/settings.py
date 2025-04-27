@@ -71,13 +71,28 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "sellitnow.wsgi.application"
 
-DATABASES = {
-    'default': dj_database_url.config(
-        default='postgresql://postgres:hSEjZdGIqLGMoYOtbIYLPxbNxwQrtKFc@interchange.proxy.rlwy.net:50440/railway',
-        conn_max_age=600,
-        ssl_require=True,
-    )
-}
+USE_LOCAL_DB = os.environ.get('USE_LOCAL_DB', 'True') == 'True'
+
+if USE_LOCAL_DB:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'django_app',
+            'USER': 'postgres',
+            'PASSWORD': '  ',  # double spaces
+            'HOST': 'localhost',
+            'PORT': '5432',
+        }
+    }
+else:
+    DATABASES = {
+        'default': dj_database_url.config(
+            default='postgresql://postgres:hSEjZdGIqLGMoYOtbIYLPxbNxwQrtKFc@interchange.proxy.rlwy.net:50440/railway',
+            conn_max_age=600,
+            ssl_require=True,
+        )
+    }
+
 
 
 # Password validation
