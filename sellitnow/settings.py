@@ -6,8 +6,6 @@ import dj_database_url
 # Load environment variables from .env
 load_dotenv()
 
-print(f"Database settings: {DATABASES['default']}")
-print(f"Database settings: {DATABASES['default']}")
 
 # Base directory of the project
 BASE_DIR = Path(__file__).resolve().parent.parent
