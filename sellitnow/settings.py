@@ -74,16 +74,35 @@ WSGI_APPLICATION = "sellitnow.wsgi.application"
 USE_LOCAL_DB = os.environ.get('USE_LOCAL_DB', 'True') == 'True'
 
 if USE_LOCAL_DB:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'django_app',
-            'USER': 'postgres',
-            'PASSWORD': '  ',  # double spaces
-            'HOST': 'localhost',
-            'PORT': '5432',
+    try:
+        # Attempt to connect to the local DB to ensure it's available
+        conn = psycopg2.connect(
+            dbname='django_app',
+            user='postgres',
+            password='  ',  # double spaces
+            host='localhost',
+            port='5432',
+        )
+        conn.close()
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql',
+                'NAME': 'django_app',
+                'USER': 'postgres',
+                'PASSWORD': '  ',
+                'HOST': 'localhost',
+                'PORT': '5432',
+            }
         }
-    }
+    except Exception as e:
+        print(f"Local DB connection failed, falling back to cloud DB. Error: {e}")
+        DATABASES = {
+            'default': dj_database_url.config(
+                default='postgresql://postgres:hSEjZdGIqLGMoYOtbIYLPxbNxwQrtKFc@interchange.proxy.rlwy.net:50440/railway',
+                conn_max_age=600,
+                ssl_require=True,
+            )
+        }
 else:
     DATABASES = {
         'default': dj_database_url.config(
@@ -92,8 +111,6 @@ else:
             ssl_require=True,
         )
     }
-
-
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
