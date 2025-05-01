@@ -11,7 +11,7 @@
         body {
             margin: 0;
             font-family: Arial, sans-serif;
-            background-color: #111;
+            background-color: #6a0dad; /* Purple */
             color: #fff;
             text-align: center;
         }
@@ -55,7 +55,7 @@
             margin: 0 auto;
             max-width: 100%;
             height: auto;
-            touch-action: none; /* prevent pinch-zoom interfering */
+            touch-action: none;
         }
 
         .slider-container {
@@ -159,15 +159,15 @@
         updateBallVelocity();
     });
 
-    // Mouse control
+    // Desktop mouse control
     canvas.addEventListener("mousemove", e => {
         const rect = canvas.getBoundingClientRect();
         player.y = e.clientY - rect.top - paddleH / 2;
     });
 
-    // Touch control (mobile)
+    // Mobile touch control (direct Y positioning)
     canvas.addEventListener("touchmove", e => {
-        e.preventDefault(); // prevent page scroll
+        e.preventDefault();
         const rect = canvas.getBoundingClientRect();
         const touchY = e.touches[0].clientY;
         player.y = touchY - rect.top - paddleH / 2;
