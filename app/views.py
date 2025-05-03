@@ -53,8 +53,8 @@ def play_ping_pong(request):
     return render(request, 'games/ping_pong.html')
 
 @login_required
-def play_tetris(request):
-    return render(request, 'games/tetris.html')
+def play_galaxy_shooter(request):
+    return render(request, 'games/galaxy_shooter.html')
 
 # -------------------------------
 # API Endpoint: Update Points

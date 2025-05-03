@@ -70,4 +70,4 @@ def play_ping_pong(request):
 # -------------------------------
 @login_required
 def play_tetris(request):
-    return render(request, 'games/tetris.html')
+    return render(request, 'games/galaxy_shooter.html')

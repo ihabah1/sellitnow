@@ -4,7 +4,7 @@ from app.views import (
     HomeView,
     LobbyView,
     play_ping_pong,
-    play_tetris,
+    play_galaxy_shooter,
     submit_score,
     user_dashboard,
     update_points
@@ -21,7 +21,7 @@ urlpatterns = [
     # Game lobby & play
     path('lobby/', LobbyView.as_view(), name='lobby'),
     path('play/ping-pong/', play_ping_pong, name='play_ping_pong'),
-    path('play/tetris/', play_tetris, name='play_tetris'),
+    path('play/galaxy_shooter/', play_galaxy_shooter, name='play_galaxy_shooter'),
     path('submit-score/', submit_score, name='submit_score'),
     path("api/update-points/", update_points, name="update_points"),
     # Auth
