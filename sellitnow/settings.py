@@ -157,6 +157,7 @@ AUTHENTICATION_BACKENDS = (
 
 # Django-Allauth settings (Updated)
 # ACCOUNT_LOGIN_METHODS = "email"  # Replaces ACCOUNT_AUTHENTICATION_METHOD
+
 # ACCOUNT_EMAIL_REQUIRED = True
 # ACCOUNT_USERNAME_REQUIRED = False
 # ACCOUNT_EMAIL_VERIFICATION = "mandatory"
@@ -166,7 +167,7 @@ ACCOUNT_RATE_LIMITS = {
 }
 
 # Allow login with either username or email
-ACCOUNT_AUTHENTICATION_METHOD = "username_email"
+ACCOUNT_LOGIN_METHODS = {'username', 'email'}
 
 # Make username required
 ACCOUNT_USERNAME_REQUIRED = True

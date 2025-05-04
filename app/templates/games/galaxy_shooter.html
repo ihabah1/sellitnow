@@ -1,26 +1,196 @@
+﻿{% load static %}
+{% load account %}
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Tetris</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Galaxy Shooter</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { margin:0; font-family:Arial,sans-serif; background:#000; color:#fff; text-align:center; }
+    header { background:#222; padding:1em; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; }
+    header nav a { color:#fff; margin:0 1em; text-decoration:none; font-weight:bold; }
+    #notification { position:fixed; top:20px; right:20px; min-width:200px; padding:.75rem 1rem; display:none; border-radius:.25rem; z-index:1000; }
+    .score-label { margin:1em 0; font-size:1.25rem; }
+    canvas { background:#111; border:2px solid #fff; display:block; margin:0 auto; max-width:100%; height:auto; touch-action:none; }
+    @media(max-width:768px){
+      header { flex-direction:column; align-items:flex-start; }
+      header nav a { display:block; margin:.5em 0; }
+      .score-label { font-size:1rem; }
+      h1 { font-size:1.5rem; }
+    }
+  </style>
 </head>
 <body>
-    <h2 style="text-align:center;">Tetris Game (Coming Soon)</h2>
-    <p style="text-align:center;">You earned <span id="points">100</span> points for trying!</p>
 
-    <script>
-        setTimeout(() => {
-            fetch("{% url 'submit_score' %}", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRFToken": "{{ csrf_token }}"
-                },
-                body: JSON.stringify({
-                    game: "tetris",
-                    score: 100
-                })
-            });
-        }, 2000);
-    </script>
+  <header>
+    <div><strong>Welcome, {{ user.username }}</strong></div>
+    <nav>
+      <a href="{% url 'lobby' %}">🏠 Lobby</a>
+      <a href="{% url 'profile' %}">⭐ Profile</a>
+      <a href="{% url 'account_logout' %}">🚪 Logout</a>
+    </nav>
+  </header>
+
+  <div id="notification" class="alert" role="alert"></div>
+
+  <div class="score-label">
+    🚀 Your Current Points: <span id="user-score">{{ total_score }}</span>
+  </div>
+
+  <h1>Galaxy Shooter: Defend the Galaxy</h1>
+  <canvas id="gameCanvas" width="800" height="400"></canvas>
+  <p id="score">Your Score: 0</p>
+
+  <div class="slider-container">
+    <label for="speedSlider">⚡ Bullet Speed: <span id="speedValue">3</span></label><br>
+    <input type="range" id="speedSlider" min="2" max="10" value="3">
+  </div>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas'),
+          ctx    = canvas.getContext('2d'),
+          notif  = document.getElementById('notification'),
+          scoreEl= document.getElementById('score'),
+          userScoreEl = document.getElementById('user-score'),
+          speedSlider = document.getElementById('speedSlider'),
+          speedValue  = document.getElementById('speedValue');
+
+    let baseSpeed   = +speedSlider.value,
+        playerScore = 0,
+        gameOver    = false,
+        blocks      = [],
+        bullets     = [],
+        autoShoot   = false,
+        pressTimer;
+
+    speedSlider.addEventListener('input', e => {
+      baseSpeed = +e.target.value;
+      speedValue.textContent = baseSpeed;
+    });
+
+    function showNotification(msg, points, type='info'){
+      notif.textContent = `${msg} You earned ${points} points!`;
+      notif.className = `alert alert-${type}`;
+      notif.style.display = 'block';
+      setTimeout(()=> notif.style.display='none', 4000);
+    }
+
+    // Player paddle
+    const player = { w:40, h:20, x:(canvas.width-40)/2, y:canvas.height-30 };
+
+    // Randomized row spawn
+    function spawnRow(){
+      const cols = Math.floor(canvas.width / 30);
+      for(let i=0;i<cols;i++){
+        if(Math.random()<0.5){
+          blocks.push({ x:i*30, y:0, w:30, h:30 });
+        }
+      }
+    }
+
+    // Game loop
+    function update(){
+      if(gameOver) return;
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+
+      // Draw & move blocks
+      ctx.fillStyle='red';
+      blocks.forEach((b, i)=>{
+        b.y += 1;
+        if(b.y + b.h >= canvas.height){
+          triggerEnd(false);
+        }
+        ctx.fillRect(b.x, b.y, b.w, b.h);
+      });
+
+      // Draw & move bullets
+      ctx.fillStyle='yellow';
+      bullets.forEach((b,i)=>{
+        b.y -= baseSpeed;
+        if(b.y<0) bullets.splice(i,1);
+        ctx.fillRect(b.x,b.y,b.w,b.h);
+      });
+
+      // Draw player
+      ctx.fillStyle='green';
+      ctx.fillRect(player.x,player.y,player.w,player.h);
+
+      // Collisions
+      bullets.forEach((bt, bi)=>{
+        blocks.forEach((bl, bli)=>{
+          if(bt.x < bl.x+bl.w && bt.x+bt.w > bl.x &&
+             bt.y < bl.y+bl.h && bt.y+bt.h > bl.y){
+            bullets.splice(bi,1);
+            blocks.splice(bli,1);
+            playerScore+=10;
+            scoreEl.textContent = `Your Score: ${playerScore}`;
+            if(playerScore>=50) triggerEnd(true);
+          }
+        });
+      });
+
+      if(!gameOver) requestAnimationFrame(update);
+    }
+
+    // End or win
+    let scoreSent=false;
+    function triggerEnd(won){
+      gameOver=true;
+      const pts = won?2:1;
+      showNotification(won?'🏆 You Win!':'💥 Game Over', pts, won?'success':'danger');
+      if(scoreSent) return;
+      scoreSent=true;
+      fetch("{% url 'update_points' %}", {
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json',
+          'X-CSRFToken':'{{ csrf_token }}'
+        },
+        body: JSON.stringify({ points:pts, game_name:'galaxy_shooter' })
+      })
+      .then(r=>r.json())
+      .then(data=>{
+        if(data.success) userScoreEl.textContent = data.total_score;
+        setTimeout(()=>location.reload(),3000);
+      })
+      .catch(()=> setTimeout(()=>location.reload(),3000));
+    }
+
+    // Input
+    function movePlayer(x){
+      player.x = Math.max(0, Math.min(x - player.w/2, canvas.width-player.w));
+    }
+
+    // Mouse
+    canvas.addEventListener('mousedown',e=>{
+      movePlayer(e.clientX);
+      bullets.push({ x:player.x+player.w/2-3, y:player.y, w:6, h:12 }); // Immediate shot on click
+    });
+    canvas.addEventListener('mousemove',e=>movePlayer(e.clientX));
+
+    // Touch
+    canvas.addEventListener('touchstart',e=>{
+      movePlayer(e.touches[0].clientX);
+      bullets.push({ x:player.x+player.w/2-3, y:player.y, w:6, h:12 }); // Immediate shot on touch
+    },{passive:false});
+    canvas.addEventListener('touchmove',e=>{
+      e.preventDefault();
+      movePlayer(e.touches[0].clientX);
+    },{passive:false});
+
+    // Auto‐shoot loop
+    setInterval(()=>{
+      if(autoShoot && !gameOver){
+        bullets.push({ x:player.x+player.w/2-3, y:player.y, w:6, h:12 });
+      }
+    }, 150);
+
+    // Kick off
+    spawnRow();
+    setInterval(spawnRow, 2000);
+    update();
+  </script>
 </body>
 </html>

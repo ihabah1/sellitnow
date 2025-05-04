@@ -5,7 +5,7 @@ from django.utils.timezone import now
 # 🎮 Track each game
 # in models.py
 class Game(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, unique=True, null=True, blank=True)
     description = models.TextField(blank=True, null=True)
     max_score = models.IntegerField(default=3)
 

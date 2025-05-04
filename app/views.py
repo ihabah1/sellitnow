@@ -62,21 +62,35 @@ def play_galaxy_shooter(request):
 @csrf_exempt
 @login_required
 def update_points(request):
-    if request.method == "POST":
-        try:
-            data = json.loads(request.body)
-            points = int(data.get("points", 0))
-            user = request.user
+    if request.method != "POST":
+        print("[update_points] invalid method:", request.method)
+        return JsonResponse({"success": False, "error": "Invalid method"}, status=405)
 
-            game, _ = Game.objects.get_or_create(name="Ping Pong", defaults={"max_score": 3})
-            GameScore.objects.create(user=user, game=game, score=points)
+    try:
+        data = json.loads(request.body)
+        points = int(data.get("points", 0))
+        game_name = data.get("game_name", "<missing>")
+        user = request.user
 
-            total = GameScore.objects.filter(user=user).aggregate(Sum('score'))['score__sum'] or 0
-            return JsonResponse({"success": True, "total_score": total})
-        except Exception as e:
-            return JsonResponse({"success": False, "error": str(e)}, status=400)
-    return JsonResponse({"success": False, "error": "Invalid request method"}, status=405)
+        print(f"[update_points] user={user.username}, points={points}, game_name={game_name}")
 
+        game, created = Game.objects.get_or_create(
+            name=game_name,
+            defaults={"description": "auto‐created", "max_score": 100}
+        )
+        print(f"[update_points] resolved game id={game.id}, name={game.name}, created={created}")
+
+        GameScore.objects.create(user=user, game=game, score=points)
+        print(f"[update_points] GameScore created for user={user.username}, game id={game.id}, score={points}")
+
+        total = GameScore.objects.filter(user=user).aggregate(Sum("score"))["score__sum"] or 0
+        print(f"[update_points] new total_score for {user.username} = {total}")
+
+        return JsonResponse({"success": True, "total_score": total})
+
+    except Exception as e:
+        print("[update_points] Exception:", str(e))
+        return JsonResponse({"success": False, "error": str(e)}, status=400)
 # -------------------------------
 # Home Page
 # -------------------------------
