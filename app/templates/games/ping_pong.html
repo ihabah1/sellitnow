@@ -1,239 +1,205 @@
-﻿{% load static %}
-{% load account %}
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Pong: You vs AI</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <title>Table Tennis AI Game</title>
   <style>
     body {
+      background: #111;
+      color: white;
+      text-align: center;
       margin: 0;
       font-family: Arial, sans-serif;
-      background-color: #6a0dad;
-      color: #fff;
-      text-align: center;
-    }
-    header {
-      background: #222;
-      padding: 1em;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-    header nav a {
-      color: #fff;
-      margin: 0 1em;
-      text-decoration: none;
-      font-weight: bold;
-    }
-    #notification {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      min-width: 200px;
-      padding: .75rem 1rem;
-      display: none;
-      border-radius: .25rem;
-      z-index: 1000;
-    }
-    .score-label {
-      margin: 1em 0;
-      font-size: 1.25rem;
     }
     canvas {
       background: #000;
-      border: 2px solid #fff;
       display: block;
-      margin: 0 auto;
-      max-width: 100%;
-      height: auto;
-      touch-action: none;
+      margin: 20px auto;
+      border: 4px solid #fff;
+      cursor: none;
     }
-    .slider-container {
-      margin-top: 1em;
+    #score {
+      font-size: 1.5em;
+      margin-bottom: 10px;
     }
-    input[type="range"] {
-      width: 300px;
-    }
-    @media (max-width: 768px) {
-      .score-label { font-size: 1rem; }
-      input[type="range"] { width: 100%; }
-      header { flex-direction: column; align-items: flex-start; }
-      header nav a { display: block; margin: .5em 0; }
-      h1 { font-size: 1.5rem; }
+    #message {
+      font-size: 2em;
+      color: gold;
+      margin-top: 10px;
     }
   </style>
 </head>
 <body>
 
-<header>
-  <div><strong>Welcome, {{ user.username }}</strong></div>
-  <nav>
-    <a href="{% url 'lobby' %}">🏠 Lobby</a>
-    <a href="{% url 'account_logout' %}">🚪 Logout</a>
-  </nav>
-</header>
-
-<div id="notification" class="alert" role="alert"></div>
-
-<div class="score-label">
-  🎮 Your Current Points: <span id="user-score">{{ total_score }}</span>
-</div>
-
-<h1>Pong: You vs AI</h1>
+<h1>🎾 Table Tennis: Player vs AI</h1>
 <canvas id="gameCanvas" width="800" height="400"></canvas>
-<p id="score">You: 0 – AI: 0</p>
-
-<div class="slider-container">
-  <label for="speedSlider">⚡ Ball Speed: <span id="speedValue">3</span></label><br>
-  <input type="range" id="speedSlider" min="2" max="10" value="3">
-</div>
+<div id="score">Player: 0 | AI: 0</div>
+<div id="message"></div>
 
 <script>
-  function showNotification(msg, type = "info") {
-    const n = document.getElementById("notification");
-    n.textContent = msg;
-    n.className = `alert alert-${type}`;
-    n.style.display = "block";
-    setTimeout(() => n.style.display = "none", 5000);
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+const WIDTH = canvas.width;
+const HEIGHT = canvas.height;
+
+const RACKET_RADIUS = 25;
+const HANDLE_HEIGHT = 40;
+const HANDLE_WIDTH = 6;
+const WINNING_SCORE = 3;
+
+let playerScore = 0, aiScore = 0;
+let playerCanHit = false;
+let aiCanHit = false;
+let playerSwing = 0;
+let aiSwing = 0;
+let gameOver = false;
+
+const ball = {
+  x: WIDTH / 2,
+  y: HEIGHT / 2,
+  dx: -4,
+  dy: 3,
+  radius: 8
+};
+
+const player = { x: 100, y: HEIGHT / 2 };
+const ai = { x: WIDTH - 100, y: HEIGHT / 2 };
+
+canvas.addEventListener("mousemove", e => {
+  const rect = canvas.getBoundingClientRect();
+  const y = e.clientY - rect.top;
+  const x = e.clientX - rect.left;
+  if (x <= WIDTH / 2) {
+    player.y = Math.max(RACKET_RADIUS, Math.min(HEIGHT - RACKET_RADIUS, y));
+    player.x = Math.max(RACKET_RADIUS, Math.min(WIDTH / 2 - RACKET_RADIUS, x));
+  }
+});
+
+canvas.addEventListener("click", () => {
+  playerCanHit = true;
+  playerSwing = 20;
+});
+
+// Draw swinging racket
+function drawRacket(x, y, color, swingAngle = 0) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate((Math.PI / 180) * swingAngle);
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(0, 0, RACKET_RADIUS, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillRect(-HANDLE_WIDTH / 2, RACKET_RADIUS, HANDLE_WIDTH, HANDLE_HEIGHT);
+  ctx.restore();
+}
+
+function drawCenterLine() {
+  ctx.strokeStyle = '#888';
+  ctx.setLineDash([10, 10]);
+  ctx.beginPath();
+  ctx.moveTo(WIDTH / 2, 0);
+  ctx.lineTo(WIDTH / 2, HEIGHT);
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function drawBall() {
+  ctx.fillStyle = "white";
+  ctx.beginPath();
+  ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function moveAI() {
+  const targetY = ball.y;
+  const targetX = ball.x > WIDTH / 2 ? ball.x : WIDTH - 100;
+  const dx = targetX - ai.x;
+  const dy = targetY - ai.y;
+
+  ai.x += Math.sign(dx) * Math.min(3, Math.abs(dx));
+  ai.y += Math.sign(dy) * Math.min(3, Math.abs(dy));
+
+  ai.x = Math.max(WIDTH / 2 + RACKET_RADIUS, Math.min(WIDTH - RACKET_RADIUS, ai.x));
+  ai.y = Math.max(RACKET_RADIUS, Math.min(HEIGHT - RACKET_RADIUS, ai.y));
+
+  if (Math.abs(ball.x - ai.x) < RACKET_RADIUS + ball.radius &&
+      Math.abs(ball.y - ai.y) < RACKET_RADIUS + ball.radius) {
+    aiCanHit = true;
+    aiSwing = 20;
+  }
+}
+
+function resetBall() {
+  ball.x = WIDTH / 2;
+  ball.y = HEIGHT / 2;
+  ball.dx = -4 * (Math.random() > 0.5 ? 1 : -1);
+  ball.dy = 3 * (Math.random() > 0.5 ? 1 : -1);
+}
+
+function update() {
+  if (gameOver) return;
+
+  ctx.clearRect(0, 0, WIDTH, HEIGHT);
+
+  drawCenterLine();
+  drawRacket(player.x, player.y, "#6a0dad", playerSwing); // Player racket
+  drawRacket(ai.x, ai.y, "red", aiSwing); // AI racket
+  drawBall();
+
+  ball.x += ball.dx;
+  ball.y += ball.dy;
+
+  if (ball.y - ball.radius < 0 || ball.y + ball.radius > HEIGHT) {
+    ball.dy *= -1;
   }
 
-  const canvas = document.getElementById("gameCanvas"),
-        ctx    = canvas.getContext("2d"),
-        paddleH = 80, paddleW = 10;
-
-  let baseSpeed   = parseInt(document.getElementById("speedSlider").value),
-      aiSpeed     = 2,
-      playerScore = 0, aiScore = 0,
-      gameOver    = false,
-      dxSign      = Math.random() < .5 ? 1 : -1,
-      dySign      = Math.random() < .5 ? 1 : -1,
-      winningScore= 3;
-
-  let player = { x: 10, y: canvas.height/2 - paddleH/2 },
-      ai     = { x: canvas.width - 20, y: canvas.height/2 - paddleH/2 },
-      ball   = { x: canvas.width/2, y: canvas.height/2, size: 10 };
-
-  function resetBall() {
-    ball.x = canvas.width/2;
-    ball.y = canvas.height/2;
-    dxSign = -dxSign;
-    dySign = Math.random() < .5 ? 1 : -1;
-  }
-
-  function updateBallVelocity() {
-    ball.dx = baseSpeed * dxSign;
-    ball.dy = baseSpeed * dySign;
-  }
-
-  document.getElementById("speedSlider").addEventListener("input", e => {
-    baseSpeed = parseInt(e.target.value);
-    document.getElementById("speedValue").textContent = baseSpeed;
-    updateBallVelocity();
-  });
-
-  canvas.addEventListener("mousemove", e => {
-    const rect = canvas.getBoundingClientRect();
-    player.y = e.clientY - rect.top - paddleH/2;
-  });
-
-  canvas.addEventListener("touchmove", e => {
-    e.preventDefault();
-    const rect = canvas.getBoundingClientRect();
-    player.y = e.touches[0].clientY - rect.top - paddleH/2;
-  }, { passive: false });
-
-  function draw() {
-    if (gameOver) return;
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "white";
-    ctx.fillRect(player.x, player.y, paddleW, paddleH);
-    ctx.fillRect(ai.x, ai.y, paddleW, paddleH);
-    ctx.beginPath();
-    ctx.arc(ball.x, ball.y, ball.size, 0, Math.PI*2);
-    ctx.fill();
-
-    ball.x += ball.dx;
-    ball.y += ball.dy;
-
-    if (ball.y - ball.size <= 0 || ball.y + ball.size >= canvas.height) {
-      dySign = -dySign; updateBallVelocity();
-    }
-
-    if (ball.x - ball.size <= player.x + paddleW &&
-        ball.y >= player.y && ball.y <= player.y + paddleH) {
-      dxSign = 1; updateBallVelocity();
-    }
-
-    if (ball.x + ball.size >= ai.x &&
-        ball.y >= ai.y && ball.y <= ai.y + paddleH) {
-      dxSign = -1; updateBallVelocity();
-    }
-
-    ai.y += ball.y < ai.y + paddleH/2 ? -aiSpeed : aiSpeed;
-
-    if (ball.x + ball.size < 0) {
-      aiScore++; resetBall(); updateBallVelocity();
-    }
-
-    if (ball.x - ball.size > canvas.width) {
-      playerScore++; resetBall(); updateBallVelocity();
-    }
-
-    document.getElementById("score").textContent =
-      `You: ${playerScore} – AI: ${aiScore}`;
-
-    if (playerScore >= winningScore) {
-      gameOver = true; endGame("player");
-    } else if (aiScore >= winningScore) {
-      gameOver = true; endGame("ai");
+  const playerDist = Math.hypot(ball.x - player.x, ball.y - player.y);
+  if (playerDist < RACKET_RADIUS + ball.radius) {
+    ball.dx = Math.abs(ball.dx);
+    if (playerCanHit) {
+      ball.dx *= 1.6;
+      ball.dy *= 1.2;
+      playerCanHit = false;
     }
   }
 
-  function endGame(winner) {
-    const points = winner === "player" ? 2 : 1;
-    awardPoints(points, winner);
+  const aiDist = Math.hypot(ball.x - ai.x, ball.y - ai.y);
+  if (aiDist < RACKET_RADIUS + ball.radius) {
+    ball.dx = -Math.abs(ball.dx);
+    if (aiCanHit) {
+      ball.dx *= 1.6;
+      ball.dy *= 1.2;
+      aiCanHit = false;
+    }
   }
 
-  function awardPoints(points, winner) {
-    showNotification("Finalizing match…", "info");
+  moveAI();
 
-    fetch("/api/update-points/", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": "{{ csrf_token }}"
-      },
-      body: JSON.stringify({
-        points: points,
-        game_name: "Ping Pong"
-      })
-    })
-    .then(r => r.json())
-    .then(data => {
-      console.log("Server response:", data);
-      if (data.success) {
-        document.getElementById("user-score").textContent = data.total_score;
-        const winText = winner === "player" ? "🏆 You won!" : "🤖 AI wins!";
-        showNotification(`${winText} +${points} points. New total: ${data.total_score}`, "success");
-      } else {
-        showNotification(data.error || "Error updating score", "danger");
-      }
-      setTimeout(() => location.reload(), 3000);
-    })
-    .catch(err => {
-      showNotification("Server error: " + err.message, "danger");
-      console.error("Fetch error:", err);
-      setTimeout(() => location.reload(), 3000);
-    });
+  if (ball.x < 0) {
+    aiScore++;
+    resetBall();
+  } else if (ball.x > WIDTH) {
+    playerScore++;
+    resetBall();
   }
 
-  updateBallVelocity();
-  setInterval(draw, 1000/60);
+  if (playerScore >= WINNING_SCORE || aiScore >= WINNING_SCORE) {
+    document.getElementById("message").textContent =
+      playerScore > aiScore ? "🏆 You Win!" : "🤖 AI Wins!";
+    gameOver = true;
+  }
+
+  document.getElementById("score").textContent = `Player: ${playerScore} | AI: ${aiScore}`;
+
+  if (playerSwing > 0) playerSwing -= 2;
+  if (aiSwing > 0) aiSwing -= 2;
+
+  requestAnimationFrame(update);
+}
+
+resetBall();
+update();
 </script>
 
 </body>
