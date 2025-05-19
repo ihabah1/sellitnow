@@ -1,15 +1,33 @@
-﻿<!DOCTYPE html>
+﻿{% load static %}
+{% load account %}
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Table Tennis AI Game</title>
   <style>
     body {
       background: #111;
       color: white;
-      text-align: center;
       margin: 0;
       font-family: Arial, sans-serif;
+      text-align: center;
+    }
+    header {
+      background: #222;
+      padding: 1em;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      color: white;
+    }
+    header nav a {
+      color: white;
+      margin: 0 1em;
+      text-decoration: none;
+      font-weight: bold;
     }
     canvas {
       background: #000;
@@ -20,25 +38,72 @@
     }
     #score {
       font-size: 1.5em;
-      margin-bottom: 10px;
+      margin: 10px 0;
     }
-    #message {
-      font-size: 2em;
-      color: gold;
-      margin-top: 10px;
+    #notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      min-width: 220px;
+      padding: 1rem 1.5rem;
+      border-radius: 5px;
+      font-weight: bold;
+      font-size: 1.2em;
+      display: none;
+      z-index: 1000;
+    }
+    #notification.success {
+      background-color: #28a745;
+      color: white;
+      border: 2px solid #1e7e34;
+    }
+    #notification.error {
+      background-color: #dc3545;
+      color: white;
+      border: 2px solid #a71d2a;
+    }
+    #rematchBtn {
+      display: none;
+      background-color: #6a0dad;
+      color: white;
+      font-size: 1.5em;
+      border: none;
+      padding: 10px 30px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 20px auto;
+      user-select: none;
+      transition: background-color 0.3s ease;
+    }
+    #rematchBtn:hover {
+      background-color: #8e2de2;
     }
   </style>
 </head>
 <body>
 
+<header>
+  <div><strong>Welcome, {{ user.username }}</strong></div>
+  <nav>
+    <a href="{% url 'lobby' %}">🏠 Lobby</a>
+    <a href="{% url 'profile' %}">⭐ Profile</a>
+    <a href="{% url 'account_logout' %}">🚪 Logout</a>
+  </nav>
+</header>
+
+<div id="notification"></div>
+
 <h1>🎾 Table Tennis: Player vs AI</h1>
 <canvas id="gameCanvas" width="800" height="400"></canvas>
 <div id="score">Player: 0 | AI: 0</div>
-<div id="message"></div>
+<button id="rematchBtn">🔁 Rematch</button>
 
 <script>
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
+const notification = document.getElementById('notification');
+const rematchBtn = document.getElementById('rematchBtn');
+const scoreDisplay = document.getElementById('score');
 
 const WIDTH = canvas.width;
 const HEIGHT = canvas.height;
@@ -54,6 +119,7 @@ let aiCanHit = false;
 let playerSwing = 0;
 let aiSwing = 0;
 let gameOver = false;
+let scoreSent = false;
 
 const ball = {
   x: WIDTH / 2,
@@ -77,11 +143,12 @@ canvas.addEventListener("mousemove", e => {
 });
 
 canvas.addEventListener("click", () => {
-  playerCanHit = true;
-  playerSwing = 20;
+  if (!gameOver) {
+    playerCanHit = true;
+    playerSwing = 20;
+  }
 });
 
-// Draw swinging racket
 function drawRacket(x, y, color, swingAngle = 0) {
   ctx.save();
   ctx.translate(x, y);
@@ -137,14 +204,37 @@ function resetBall() {
   ball.dy = 3 * (Math.random() > 0.5 ? 1 : -1);
 }
 
+function showNotification(msg, points, type = 'success') {
+  notification.textContent = `${msg} You earned ${points} point${points > 1 ? 's' : ''}!`;
+  notification.className = type === 'success' ? 'success' : 'error';
+  notification.style.display = 'block';
+}
+
+function hideNotification() {
+  notification.style.display = 'none';
+}
+
+function resetGame() {
+  playerScore = 0;
+  aiScore = 0;
+  gameOver = false;
+  scoreSent = false;
+  rematchBtn.style.display = 'none';
+  hideNotification();
+  resetBall();
+  update();
+}
+
+rematchBtn.addEventListener('click', resetGame);
+
 function update() {
   if (gameOver) return;
 
   ctx.clearRect(0, 0, WIDTH, HEIGHT);
 
   drawCenterLine();
-  drawRacket(player.x, player.y, "#6a0dad", playerSwing); // Player racket
-  drawRacket(ai.x, ai.y, "red", aiSwing); // AI racket
+  drawRacket(player.x, player.y, "#6a0dad", playerSwing);
+  drawRacket(ai.x, ai.y, "red", aiSwing);
   drawBall();
 
   ball.x += ball.dx;
@@ -176,6 +266,7 @@ function update() {
 
   moveAI();
 
+  // Score updates and ball reset on scoring
   if (ball.x < 0) {
     aiScore++;
     resetBall();
@@ -184,22 +275,55 @@ function update() {
     resetBall();
   }
 
-  if (playerScore >= WINNING_SCORE || aiScore >= WINNING_SCORE) {
-    document.getElementById("message").textContent =
-      playerScore > aiScore ? "🏆 You Win!" : "🤖 AI Wins!";
-    gameOver = true;
-  }
+  scoreDisplay.textContent = `Player: ${playerScore} | AI: ${aiScore}`;
 
-  document.getElementById("score").textContent = `Player: ${playerScore} | AI: ${aiScore}`;
+  if (playerScore >= WINNING_SCORE || aiScore >= WINNING_SCORE) {
+    gameOver = true;
+    const won = playerScore > aiScore;
+    const pts = won ? 2 : 1;
+
+    // Show notification
+    showNotification(won ? "🏆 You Win!" : "🤖 AI Wins!", pts, won ? 'success' : 'error');
+
+    // Send score once
+    if (!scoreSent) {
+      scoreSent = true;
+      fetch("{% url 'update_points' %}", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({ points: pts, game_name: 'table_tennis' })
+      })
+      .then(response => response.json())
+      .then(data => {
+        // Optionally update user total score if returned
+        if (data.success && data.total_score !== undefined) {
+          // You could show total_score somewhere if you want
+          console.log('New total score:', data.total_score);
+        }
+      })
+      .catch(console.error);
+    }
+
+    // After notification delay, show rematch button
+    setTimeout(() => {
+      hideNotification();
+      rematchBtn.style.display = 'inline-block';
+    }, 4000);
+  }
 
   if (playerSwing > 0) playerSwing -= 2;
   if (aiSwing > 0) aiSwing -= 2;
 
-  requestAnimationFrame(update);
+  if (!gameOver) requestAnimationFrame(update);
 }
 
+// Initialize game
 resetBall();
 update();
+
 </script>
 
 </body>
